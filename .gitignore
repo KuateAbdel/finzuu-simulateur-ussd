@@ -1,0 +1,69 @@
+# ─────────────────────────────────────────────────────────────
+#  Simulateur USSD FinZuu — fichiers exclus du versionnement
+#  Posé avant le premier commit. Ce qui entre dans l'historique
+#  y reste, même supprimé ensuite.
+# ─────────────────────────────────────────────────────────────
+
+# ── Secrets et configuration d'environnement ────────────────
+# Aucune adresse de service, aucune clé, aucun identifiant
+# ne doit entrer dans l'historique.
+.env
+.env.*
+!.env.example
+*.pem
+*.p12
+*.key
+*.mobileprovision
+
+# ── Signature Android ───────────────────────────────────────
+# Une clé de signature perdue dans l'historique compromet
+# toute distribution ultérieure.
+*.jks
+*.keystore
+!debug.keystore
+android/key.properties
+android/app/google-services.json
+
+# ── Dépendances ─────────────────────────────────────────────
+node_modules/
+.yarn/
+.pnp.*
+
+# ── Artefacts de compilation ────────────────────────────────
+android/app/build/
+android/build/
+android/.gradle/
+android/local.properties
+android/.cxx/
+*.apk
+*.aab
+ios/build/
+ios/Pods/
+ios/*.xcworkspace
+ios/*.xcuserdata/
+DerivedData/
+
+# ── Cache de l'outillage ────────────────────────────────────
+.metro-health-check*
+metro-cache/
+*.tsbuildinfo
+.eslintcache
+coverage/
+
+# ── Journaux ────────────────────────────────────────────────
+*.log
+npm-debug.log*
+yarn-error.log*
+
+# ── Environnement de travail ────────────────────────────────
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+.DS_Store
+Thumbs.db
+
+# ── Zone de préparation ─────────────────────────────────────
+# Brouillons et essais hors périmètre du livrable.
+/scratch/
+/tmp/
