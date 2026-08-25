@@ -45,6 +45,10 @@ export interface DemandeAttribution {
   pays: string;
   genre: string;
   categorie: string;
+  /** Contrat 0.4 — marque + modèle (« Redmi Note 13 »), OPTIONNEL, jamais
+   *  un identifiant : deux téléphones identiques envoient la même valeur.
+   *  Sert uniquement la lecture d'exploitation (tableau de bord). */
+  appareil?: string | null;
 }
 
 /** Réponse `201` de l'attribution — et corps `200` de la vérification

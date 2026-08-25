@@ -20,6 +20,8 @@
  *   bail échu ou perdu → écran 13 → phase 1
  */
 
+import { Platform } from 'react-native';
+
 import {
   demanderAttribution,
   libererBail,
@@ -77,6 +79,19 @@ function nouvelIdentifiantSession(): string {
 /** Génère une clé d'idempotence — contrat §2 : UNE par TENTATIVE
  *  d'attribution, conservée pendant les reprises, renouvelée quand l'usager
  *  relance depuis le profil. */
+/** Le modèle de l'appareil — contrat 0.4. `Platform.constants` expose
+ *  Build.BRAND / Build.MODEL sur Android : AUCUNE permission, AUCUNE
+ *  dépendance native ajoutée. Ce n'est PAS un identifiant (deux téléphones
+ *  identiques rendent la même valeur) — c'est une étiquette d'exploitation
+ *  pour le tableau de bord, rattachée au bail donc au msisdn. */
+export function modeleAppareil(): string | null {
+  const constantes = Platform.constants as { Brand?: string; Model?: string };
+  const marque = constantes.Brand?.trim() ?? '';
+  const modele = constantes.Model?.trim() ?? '';
+  const etiquette = [marque, modele].filter(Boolean).join(' ');
+  return etiquette.length > 0 ? etiquette.slice(0, 64) : null;
+}
+
 function nouvelleCleIdempotence(): string {
   return `${Date.now().toString(16)}-${Math.random().toString(16).slice(2)}-${Math.random()
     .toString(16)
@@ -224,7 +239,11 @@ export class Coordination {
       await ecrireTentative({ cle, profil: demande });
     }
 
-    const resultat = await demanderAttribution(this.optionsAttribution(), demande, cle);
+    const resultat = await demanderAttribution(
+      this.optionsAttribution(),
+      { ...demande, appareil: modeleAppareil() }, // contrat 0.4 — hors clé de rejeu
+      cle,
+    );
     if (resultat.issue === 'ok') {
       await effacerTentative(); // le 201 est reçu : régime établi, 4 valeurs
       this.bail = {
