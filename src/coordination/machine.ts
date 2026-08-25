@@ -43,6 +43,7 @@ import {
 /** Les destinations que la coordination peut ordonner. Les écrans 1 à 13 du
  *  deck, nommés — jamais un numéro magique dans le code. */
 export type Destination =
+  | 'demarrage' // 0 — logo, non interactif, le temps de la lecture LOCALE
   | 'accueil' // 1
   | 'profil' // 2
   | 'attente' // 3
@@ -131,29 +132,40 @@ export class Coordination {
 
   // ── Lancement — décide de la phase (EF-07, EF-15, contrat §3) ──────────
 
-  /** Au lancement : où aller ?
+  /** LA DÉCISION DE DÉMARRAGE — LOCALE, IMMÉDIATE, SANS AUCUN RÉSEAU.
    *
-   *  1. Pas de bail local              → phase 1 (accueil).
-   *  2. Bail local échu à NOTRE horloge → écran 13 (EF-15). La vérification
-   *     serveur n'est pas tentée : même si le serveur vivait encore, un bail
-   *     que l'app croit mort doit être re-vérifié par une nouvelle
-   *     attribution — et le serveur, lui, le considère déjà libre (§5 de la
-   *     conception, expiration passive).
-   *  3. Bail local valide → vérification serveur (contrat §3, v0.3) :
-   *       200    → l'échéance SERVEUR remplace la locale, phase 2 ;
-   *       absent → le serveur a perdu le bail (expiration, libération,
-   *                réinitialisation) → écran 13 ;
-   *       reseau/serveur → on POURSUIT sur la foi du bail stocké — on ne
-   *                jette jamais un bail sur un échec de vérification, le
-   *                callback tranchera (contrat §3). */
-  async demarrer(): Promise<Destination> {
+   *  DÉFAUT CORRIGÉ (FZ-DIAG-BAIL-2026-001, reproduit par le QA Lead le
+   *  25/08) : l'ancienne `demarrer()` ATTENDAIT la vérification serveur
+   *  (jusqu'à 15 s) avant de router — et pendant cette fenêtre l'ACCUEIL
+   *  INTERACTIF était affiché. L'usager, voyant l'écran de départ, concluait
+   *  que son numéro était perdu et re-attribuait : deux baux actifs mesurés
+   *  en production, le premier orphelin. EF-06 et INV-SIM-02 violés par le
+   *  routage, pas par la persistance.
+   *
+   *  La séquence est désormais : lire (ms) → décider → afficher → PUIS
+   *  vérifier en arrière-plan (`verifierBailEnFond`). Le contrat §3 demande
+   *  une vérification au lancement — il n'a jamais demandé d'attendre sa
+   *  réponse pour afficher quelque chose. */
+  async demarrerLocal(): Promise<Destination> {
     this.bail = await lireBail();
     if (this.bail === null) return 'accueil';
-
     if (new Date(this.bail.expire_le).getTime() <= Date.now()) {
-      return 'echec_bail';
+      return 'echec_bail'; // EF-15 — échéance locale dépassée
     }
+    return 'composition'; // la carte SIM virtuelle est là : on la sert
+  }
 
+  /** LA VÉRIFICATION SERVEUR — EN ARRIÈRE-PLAN, JAMAIS SUR LE CHEMIN DU
+   *  ROUTAGE (contrat §3, conduites inchangées) :
+   *
+   *    200    → l'échéance SERVEUR remplace la locale, rien à router (null)
+   *    absent → le serveur a perdu le bail → 'echec_bail' (écran 13)
+   *    reseau/serveur → on POURSUIT sur la foi du stocké (null) — on ne
+   *                     jette JAMAIS un bail sur un échec de vérification
+   *
+   *  Rend la destination corrective, ou null si rien ne change. */
+  async verifierBailEnFond(): Promise<Destination | null> {
+    if (this.bail === null) return null;
     const verdict = await verifierBail(this.optionsAttribution(), this.bail.attribution_id);
     if (verdict.issue === 'ok') {
       this.bail = {
@@ -162,10 +174,10 @@ export class Coordination {
         attribution_id: verdict.valeur.attribution_id,
       };
       await ecrireBail(this.bail);
-      return 'composition';
+      return null;
     }
     if (verdict.issue === 'absent') return 'echec_bail';
-    return 'composition'; // reseau ou serveur : la foi du stocké
+    return null; // reseau ou serveur : la foi du stocké
   }
 
   /** L'écran 13 a été montré : on efface et on reconduit en phase 1

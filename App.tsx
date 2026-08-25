@@ -21,6 +21,7 @@ import { t } from './src/i18n/textes';
 import { Attente } from './src/presentation/composants';
 import { COULEURS } from './src/presentation/theme';
 import { EcranAccueil } from './src/presentation/EcranAccueil';
+import { EcranDemarrage } from './src/presentation/EcranDemarrage';
 import { EcranProfil } from './src/presentation/EcranProfil';
 import { EcranNumero } from './src/presentation/EcranNumero';
 import { EcranComposition } from './src/presentation/EcranComposition';
@@ -36,21 +37,31 @@ export default function App(): React.JSX.Element {
   const coordination = useMemo(() => new Coordination(CONFIGURATION), []);
 
   const [langue, setLangue] = useState<Langue>('fr');
-  const [destination, setDestination] = useState<Destination>('accueil');
+  const [destination, setDestination] = useState<Destination>('demarrage');
   const [criteres, setCriteres] = useState<ReponseCriteres | null>(null);
   const [session, setSession] = useState<{ poursuite: boolean; texte: string } | null>(null);
   const [chargement, setChargement] = useState(false);
   const provenance = useRef<Provenance>('demarrage');
   const dernierProfil = useRef<{ pays: string; genre: string; categorie: string } | null>(null);
 
-  // ── Démarrage : langue immédiate, bail vérifié en arrière-plan ─────────
+  // ── Démarrage : LIRE, DÉCIDER, AFFICHER — puis vérifier (diagnostic
+  //    FZ-DIAG-BAIL-2026-001). La décision est LOCALE (quelques ms) : le
+  //    splash ne vit que ce temps-là. La vérification serveur part APRÈS
+  //    l'affichage et ne fait que corriger (écran 13 si le bail est perdu).
   useEffect(() => {
     let vivant = true;
     (async () => {
       const langueStockee = await lireLangue();
       if (vivant) setLangue(langueStockee);
-      const arrivee = await coordination.demarrer();
+      const arrivee = await coordination.demarrerLocal(); // AUCUN réseau
       if (vivant) setDestination(arrivee);
+      // Arrière-plan — jamais attendu par le routage.
+      coordination
+        .verifierBailEnFond()
+        .then((bascule) => {
+          if (vivant && bascule) setDestination(bascule);
+        })
+        .catch(() => undefined);
     })();
     return () => {
       vivant = false;
@@ -114,7 +125,13 @@ export default function App(): React.JSX.Element {
 
   const rompre = useCallback(async () => {
     provenance.current = 'rupture';
-    setDestination(await coordination.rompreLiaison());
+    // Point 3 (25/08) — AUCUN écran interactif pendant une opération : la
+    // rupture est un appel réseau, l'écran d'instrumentation restait
+    // cliquable pendant qu'elle partait. Même motif que le démarrage.
+    setChargement(true);
+    const arrivee = await coordination.rompreLiaison();
+    setChargement(false);
+    setDestination(arrivee);
   }, [coordination]);
 
   /** L'action unique d'un écran d'échec — son sens dépend de la variante et
@@ -157,14 +174,16 @@ export default function App(): React.JSX.Element {
 
   const ecran = (() => {
     if (chargement && destination !== 'attente') {
+      // Le voile d'occupation GÉNÉRIQUE (point 3, 25/08) : critères,
+      // composition, poursuite, rupture. Le texte d'attribution ne vaut
+      // que pour l'écran 3 — ici l'opération peut être toute autre.
       return (
-        <Attente
-          titre={t(langue, 'attribution_titre')}
-          message={t(langue, 'attribution_attente')}
-        />
+        <Attente titre={t(langue, 'operation_titre')} message={t(langue, 'operation_attente')} />
       );
     }
     switch (destination) {
+      case 'demarrage':
+        return <EcranDemarrage />;
       case 'accueil':
         return (
           <EcranAccueil

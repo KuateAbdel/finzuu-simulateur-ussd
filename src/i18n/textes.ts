@@ -35,6 +35,8 @@ const FR = {
   // Écran 3 — attribution (EF-04)
   attribution_titre: 'Attribution en cours',
   attribution_attente: 'Recherche d’un compte correspondant à votre profil',
+  operation_titre: 'Un instant',
+  operation_attente: 'Opération en cours',
 
   // Écran 4 — numéro attribué (EF-05, EF-06)
   numero_titre: 'Votre numéro',
@@ -89,6 +91,8 @@ const EN: Record<CleTexte, string> = {
 
   attribution_titre: 'Assignment in progress',
   attribution_attente: 'Looking for an account matching your profile',
+  operation_titre: 'One moment',
+  operation_attente: 'Operation in progress',
 
   numero_titre: 'Your number',
   numero_consigne: 'Write this number down: it is your identity for the next seven days.',
