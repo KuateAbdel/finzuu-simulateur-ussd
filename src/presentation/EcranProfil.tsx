@@ -15,7 +15,7 @@
  */
 
 import React, { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { Critere, ReponseCriteres } from '../acces/contratAttribution';
 import type { Langue } from '../persistance/depot';
 import { t } from '../i18n/textes';
@@ -28,6 +28,7 @@ function libelle(critere: Critere, langue: Langue): string {
 
 function Rangee(props: {
   titre: string;
+  invite: string;
   criteres: Critere[];
   langue: Langue;
   choix: string | null;
@@ -36,34 +37,64 @@ function Rangee(props: {
    *  des codes encore pourvus (`libres > 0`). */
   pourvus: Set<string> | null;
 }) {
+  // MENU DÉROULANT (exigence QA 25/08) : un champ fermé qui OUVRE une liste,
+  // pas des pastilles étalées. La liste reste FERMÉE et servie par le
+  // serveur (CR-04) ; l'épuisé reste VISIBLE et grisé, jamais masqué
+  // (contrat §8, tranché 24/08).
+  const [ouverte, setOuverte] = useState(false);
+  const choisi = props.criteres.find((c) => c.code === props.choix) ?? null;
   return (
     <View style={styles.rangee}>
       <Text style={[TYPO.detail, styles.etiquette]}>{props.titre}</Text>
-      <View style={styles.options}>
-        {props.criteres.map((critere) => {
-          const epuise = props.pourvus !== null && !props.pourvus.has(critere.code);
-          const actif = props.choix === critere.code;
-          return (
-            <Pressable
-              key={critere.code}
-              onPress={() => props.surChoix(critere.code)}
-              disabled={epuise}
-              accessibilityRole="button"
-              accessibilityState={{ selected: actif, disabled: epuise }}
-              style={[styles.option, actif && styles.optionActive, epuise && styles.optionEpuisee]}
-            >
-              <Text
-                style={[
-                  TYPO.corps,
-                  actif ? styles.texteActif : epuise ? styles.texteEpuise : styles.texteOption,
-                ]}
-              >
-                {libelle(critere, props.langue)}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </View>
+      <Pressable
+        onPress={() => setOuverte(true)}
+        accessibilityRole="button"
+        accessibilityState={{ expanded: ouverte }}
+        style={styles.champ}
+      >
+        <Text style={[TYPO.corps, choisi ? styles.texteChamp : styles.texteInvite]}>
+          {choisi ? libelle(choisi, props.langue) : props.invite}
+        </Text>
+        <Text style={styles.chevron}>{'\u25BE'}</Text>
+      </Pressable>
+      <Modal
+        visible={ouverte}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setOuverte(false)}
+      >
+        <Pressable style={styles.voile} onPress={() => setOuverte(false)}>
+          <View style={styles.carte}>
+            <Text style={[TYPO.detail, styles.etiquette]}>{props.titre}</Text>
+            {props.criteres.map((critere) => {
+              const epuise = props.pourvus !== null && !props.pourvus.has(critere.code);
+              const actif = props.choix === critere.code;
+              return (
+                <Pressable
+                  key={critere.code}
+                  onPress={() => {
+                    props.surChoix(critere.code);
+                    setOuverte(false);
+                  }}
+                  disabled={epuise}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: actif, disabled: epuise }}
+                  style={[styles.option, actif && styles.optionActive, epuise && styles.optionEpuisee]}
+                >
+                  <Text
+                    style={[
+                      TYPO.corps,
+                      actif ? styles.texteActif : epuise ? styles.texteEpuise : styles.texteOption,
+                    ]}
+                  >
+                    {libelle(critere, props.langue)}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -117,6 +148,7 @@ export function EcranProfil(props: {
 
       <Rangee
         titre={t(props.langue, 'profil_pays')}
+        invite={t(props.langue, 'profil_choisir')}
         criteres={props.criteres.pays}
         langue={props.langue}
         choix={pays}
@@ -131,6 +163,7 @@ export function EcranProfil(props: {
       />
       <Rangee
         titre={t(props.langue, 'profil_genre')}
+        invite={t(props.langue, 'profil_choisir')}
         criteres={props.criteres.genres}
         langue={props.langue}
         choix={genre}
@@ -142,6 +175,7 @@ export function EcranProfil(props: {
       />
       <Rangee
         titre={t(props.langue, 'profil_categorie')}
+        invite={t(props.langue, 'profil_choisir')}
         criteres={props.criteres.categories}
         langue={props.langue}
         choix={categorie}
@@ -172,9 +206,32 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     marginBottom: ESPACE.serre,
   },
-  options: { flexDirection: 'row', flexWrap: 'wrap', gap: ESPACE.serre },
+  champ: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+    borderRadius: 8,
+    backgroundColor: COULEURS.fondConsigne,
+  },
+  texteChamp: { color: COULEURS.texte },
+  texteInvite: { color: COULEURS.texteSecondaire },
+  chevron: { color: COULEURS.texteSecondaire, fontSize: 16 },
+  voile: {
+    flex: 1,
+    backgroundColor: COULEURS.voile,
+    justifyContent: 'center',
+    padding: ESPACE.bord,
+  },
+  carte: {
+    backgroundColor: COULEURS.fond,
+    borderRadius: 12,
+    padding: ESPACE.bloc,
+    gap: ESPACE.serre,
+  },
   option: {
-    paddingVertical: 10,
+    paddingVertical: 12,
     paddingHorizontal: 14,
     borderRadius: 8,
     backgroundColor: COULEURS.fondConsigne,

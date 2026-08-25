@@ -30,6 +30,7 @@ const FR = {
   profil_genre: 'Genre',
   profil_categorie: 'Catégorie',
   profil_valider: 'Obtenir un numéro',
+  profil_choisir: 'Choisir',
   profil_indisponible: 'Aucun compte disponible pour cette combinaison',
 
   // Écran 3 — attribution (EF-04)
@@ -87,6 +88,7 @@ const EN: Record<CleTexte, string> = {
   profil_genre: 'Gender',
   profil_categorie: 'Category',
   profil_valider: 'Get a number',
+  profil_choisir: 'Select',
   profil_indisponible: 'No account available for this combination',
 
   attribution_titre: 'Assignment in progress',
