@@ -35,6 +35,7 @@ android/build/
 android/.gradle/
 android/local.properties
 android/.cxx/
+android/app/.cxx/
 *.apk
 *.aab
 ios/build/
