@@ -13,7 +13,7 @@
  */
 
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { Langue } from '../persistance/depot';
 import { t } from '../i18n/textes';
 import { Bouton } from './composants';
@@ -55,9 +55,11 @@ export function EcranAccueil(props: {
           delayLongPress={APPUI_LONG_INSTRUMENTATION_MS}
           accessibilityLabel="ReadyCash"
         >
-          <View style={styles.logo}>
-            <Text style={styles.logoLettre}>F</Text>
-          </View>
+          <Image
+            source={require('./actifs/logo-finzuu.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
         </Pressable>
         <Text style={[TYPO.titre, styles.nom]}>ReadyCash</Text>
         <Text style={[TYPO.corps, styles.slogan]}>{t(props.langue, 'accueil_slogan')}</Text>
@@ -81,15 +83,9 @@ const styles = StyleSheet.create({
   langueTexte: { color: COULEURS.texteSecondaire },
   langueTexteActif: { color: '#FFFFFF' },
   centre: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  logo: {
-    width: 88,
-    height: 88,
-    borderRadius: 24,
-    backgroundColor: COULEURS.primaire,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  logoLettre: { fontSize: 44, fontWeight: '700', color: '#FFFFFF' },
+  // Le VRAI logo FinZuu (celui du Loader) — grand sur l'accueil, comme
+  // demandé le 25/08. Plus de lettre « F » de substitution.
+  logo: { width: 132, height: 132 },
   nom: { color: COULEURS.texte, marginTop: ESPACE.bloc },
   slogan: {
     color: COULEURS.texteSecondaire,

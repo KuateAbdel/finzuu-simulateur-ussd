@@ -57,7 +57,7 @@ react {
 /**
  * Set this to true to Run Proguard on Release builds to minify the Java bytecode.
  */
-def enableProguardInReleaseBuilds = false
+def enableProguardInReleaseBuilds = true
 
 /**
  * The preferred build flavor of JavaScriptCore (JSC)
@@ -83,7 +83,28 @@ android {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
-        versionName "1.0"
+        versionName "0.1.0"
+    }
+    // ENF-01 (APK < 15 Mo) : un APK PAR architecture au lieu d'un universel
+    // qui embarque les bibliotheques natives des quatre. L'universel reste
+    // produit (universalApk true) comme filet de distribution manuelle.
+    splits {
+        abi {
+            enable true
+            reset()
+            include "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
+            universalApk true
+        }
+    }
+    // Signature RELEASE (exigence QA 25/08) : la cle PROPRE vit hors depot
+    // (C:\dev\cles), decrite par android/keystore.properties (gitignore).
+    // Sans ce fichier, on RETOMBE sur la cle de debogage — compilable
+    // partout, mais un tel APK ne se distribue JAMAIS : sa signature est
+    // publique et n'est pas la notre.
+    def proprietesSignature = new Properties()
+    def fichierSignature = rootProject.file("keystore.properties")
+    if (fichierSignature.exists()) {
+        fichierSignature.withInputStream { proprietesSignature.load(it) }
     }
     signingConfigs {
         debug {
@@ -92,16 +113,24 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
+        if (fichierSignature.exists()) {
+            release {
+                storeFile file(proprietesSignature['storeFile'])
+                storePassword proprietesSignature['storePassword']
+                keyAlias proprietesSignature['keyAlias']
+                keyPassword proprietesSignature['keyPassword']
+            }
+        }
     }
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
         }
         release {
-            // Caution! In production, you need to generate your own keystore file.
-            // see https://reactnative.dev/docs/signed-apk-android.
-            signingConfig signingConfigs.debug
+            signingConfig fichierSignature.exists() ? signingConfigs.release : signingConfigs.debug
             minifyEnabled enableProguardInReleaseBuilds
+            // ENF-01 : l'elagage des ressources accompagne la minification.
+            shrinkResources enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
         }
     }

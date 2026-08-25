@@ -30,11 +30,14 @@ const FR = {
   profil_genre: 'Genre',
   profil_categorie: 'Catégorie',
   profil_valider: 'Obtenir un numéro',
+  profil_choisir: 'Choisir',
   profil_indisponible: 'Aucun compte disponible pour cette combinaison',
 
   // Écran 3 — attribution (EF-04)
   attribution_titre: 'Attribution en cours',
   attribution_attente: 'Recherche d’un compte correspondant à votre profil',
+  operation_titre: 'Un instant',
+  operation_attente: 'Opération en cours',
 
   // Écran 4 — numéro attribué (EF-05, EF-06)
   numero_titre: 'Votre numéro',
@@ -85,10 +88,13 @@ const EN: Record<CleTexte, string> = {
   profil_genre: 'Gender',
   profil_categorie: 'Category',
   profil_valider: 'Get a number',
+  profil_choisir: 'Select',
   profil_indisponible: 'No account available for this combination',
 
   attribution_titre: 'Assignment in progress',
   attribution_attente: 'Looking for an account matching your profile',
+  operation_titre: 'One moment',
+  operation_attente: 'Operation in progress',
 
   numero_titre: 'Your number',
   numero_consigne: 'Write this number down: it is your identity for the next seven days.',

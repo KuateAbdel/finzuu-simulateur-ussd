@@ -35,6 +35,7 @@ android/build/
 android/.gradle/
 android/local.properties
 android/.cxx/
+android/app/.cxx/
 *.apk
 *.aab
 ios/build/
@@ -67,3 +68,6 @@ Thumbs.db
 # Brouillons et essais hors périmètre du livrable.
 /scratch/
 /tmp/
+
+# Signature release — la cle et ses secrets restent HORS depot
+android/keystore.properties
