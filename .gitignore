@@ -68,3 +68,6 @@ Thumbs.db
 # Brouillons et essais hors périmètre du livrable.
 /scratch/
 /tmp/
+
+# Signature release — la cle et ses secrets restent HORS depot
+android/keystore.properties
