@@ -55,13 +55,18 @@ export default function App(): React.JSX.Element {
       if (vivant) setLangue(langueStockee);
       const arrivee = await coordination.demarrerLocal(); // AUCUN réseau
       if (vivant) setDestination(arrivee);
-      // Arrière-plan — jamais attendu par le routage.
-      coordination
-        .verifierBailEnFond()
-        .then((bascule) => {
-          if (vivant && bascule) setDestination(bascule);
-        })
-        .catch(() => undefined);
+      // Arrière-plan — jamais attendu par le routage. Seulement quand la
+      // décision locale sert la carte SIM : un bail échu à NOTRE horloge
+      // (EF-15) ne se re-vérifie pas, il se ré-attribue — doctrine de
+      // l'ancienne demarrer(), inchangée.
+      if (arrivee === 'composition') {
+        coordination
+          .verifierBailEnFond()
+          .then((bascule) => {
+            if (vivant && bascule) setDestination(bascule);
+          })
+          .catch(() => undefined);
+      }
     })();
     return () => {
       vivant = false;
