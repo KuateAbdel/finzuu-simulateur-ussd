@@ -13,7 +13,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { SafeAreaView, StatusBar, StyleSheet } from 'react-native';
-import { CONFIGURATION } from './src/configuration';
+import { CODE_USSD, CONFIGURATION } from './src/configuration';
 import { Coordination, type Destination } from './src/coordination/machine';
 import type { ReponseCriteres } from './src/acces/contratAttribution';
 import { ecrireLangue, lireLangue, type Langue } from './src/persistance/depot';
@@ -228,6 +228,7 @@ export default function App(): React.JSX.Element {
             langue={langue}
             msisdn={coordination.msisdn() ?? ''}
             surAppel={composer}
+            codeUssd={CODE_USSD}
           />
         );
       case 'session':
@@ -247,6 +248,7 @@ export default function App(): React.JSX.Element {
             langue={langue}
             msisdn={coordination.msisdn() ?? ''}
             surAppel={composer}
+            codeUssd={CODE_USSD}
           />
         );
       case 'instrumentation':

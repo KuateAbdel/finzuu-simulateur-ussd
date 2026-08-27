@@ -17,4 +17,6 @@ declare module '@env' {
   export const USSD_BASE_URL: string;
   /** Delai d'attente reseau, en millisecondes. */
   export const REQUEST_TIMEOUT_MS: string;
+  /** Le code a composer (« *321# ») — AFFICHE a l'usager, jamais en dur. */
+  export const CODE_USSD: string;
 }
