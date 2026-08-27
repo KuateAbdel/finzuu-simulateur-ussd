@@ -46,6 +46,7 @@ const FR = {
   numero_continuer: 'Continuer',
 
   // Écran 5 — composition (EF-08)
+  composition_consigne: 'Composez {code} puis appeler',
   composition_appeler: 'Appeler',
 
   // Écrans 6 et 7 — session (EF-10..12)
@@ -101,6 +102,7 @@ const EN: Record<CleTexte, string> = {
   numero_copier: 'Copy',
   numero_continuer: 'Continue',
 
+  composition_consigne: 'Dial {code} then Call',
   composition_appeler: 'Call',
 
   session_envoyer: 'Send',
